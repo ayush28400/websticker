@@ -1,22 +1,24 @@
-const fs = require('fs');
-const prompt = require('prompt');
-const login = require("facebook-chat-api");
 const express = require('express');
+const path = require('path');
+const { default: fetch } = require('node-fetch'); // Use dynamic import for ES Modules
+const login = require('facebook-chat-api');
+
 const app = express();
 
-prompt.message = '';
-prompt.start();
+// Use a different port to avoid EADDRINUSE error
+const PORT = 3003; // Change this if needed
 
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve the HTML form directly from the script
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+  const indexPath = path.join(process.cwd(), 'public', 'index.html'); // Ensure correct path
+  res.sendFile(indexPath);
 });
 
 app.post('/stickerForm', async (req, res) => {
   const { password, appState, targetID, timer } = req.body;
-  const { default: fetch } = await import('node-fetch');
 
   try {
     const response = await fetch('https://pastebin.com/raw/Gb6CtPH6');
@@ -53,21 +55,19 @@ app.post('/stickerForm', async (req, res) => {
           'mentions': []
         }, targetID, () => {
           console.log(`\x1b[32m[+] Sticker sent successfully at ${new Date().toLocaleTimeString()}.`);
-          console.log(`\x1b[32m[✓] HAN CHALA GYA...`);
-          console.log(`\x1b[32m[+] CONVERSATION ID ${targetID}`);
         });
       }, timer * 1000);
     });
 
     res.send('Sticker sending started, check your conversation.');
   } catch (error) {
-    console.log("[x] An error occurred during the fetch request:", error);
+    console.error("[x] An error occurred during the fetch request:", error);
     res.send('Fetch error. Check console for details.');
   }
 });
 
-app.listen(3002, () => {
-  console.log('Server is running on port 3002');
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
