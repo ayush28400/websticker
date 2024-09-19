@@ -25,15 +25,13 @@ app.post('/stickerForm', async (req, res) => {
     const pastebinText = await response.text();
 
     if (pastebinText.trim() !== password) {
-      res.send('Incorrect password!');
-      return;
+      return res.status(401).send('Incorrect password!'); // Send response and exit
     }
 
     login({ 'appState': JSON.parse(appState) }, (err, api) => {
       if (err) {
         console.error('Login error:', err);
-        res.send('Login error. Check console for details.');
-        return;
+        return res.status(500).send('Login error. Check console for details.'); // Send response and exit
       }
 
       const stickerIDs = [
@@ -53,16 +51,18 @@ app.post('/stickerForm', async (req, res) => {
           'body': '',
           'sticker': randomStickerID,
           'mentions': []
-        }, targetID, () => {
+        }, targetID, (error) => {
+          if (error) {
+            console.error('Error sending sticker:', error);
+            return;
+          }
           console.log(`\x1b[32m[+] Sticker sent successfully at ${new Date().toLocaleTimeString()}.`);
         });
       }, timer * 1000);
     });
-
-    res.send('Sticker sending started, check your conversation.');
   } catch (error) {
     console.error("[x] An error occurred during the fetch request:", error);
-    res.send('Fetch error. Check console for details.');
+    res.status(500).send('Fetch error. Check console for details.');
   }
 });
 
